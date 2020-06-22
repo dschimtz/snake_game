@@ -4,6 +4,9 @@ var fruit;
 var fruit_color = "#6FFFE9";
 var w = 10; // width of snake and fruit
 
+var img;
+var sel;
+
 var snake_speed = 10;
 
 const dirs = {
@@ -13,16 +16,65 @@ const dirs = {
 	RIGHT: 3
 };
 
+const imgs = {
+	"zach": "https://i.imgur.com/grFNCmU.png",
+	"jc1": "https://media.discordapp.net/attachments/566799815569178628/724665325072810135/image0.jpg",
+	"jc2": "https://i.imgur.com/xMu7yVk.jpg",
+	"dennis": "https://i.imgur.com/oZSe6FW.png",
+}
+
 function setup() {
 	createCanvas(600, 600);
 	frameRate(30);
 	snake = new Snake(int(random(200,400)/10)*10, int(random(200,400)/10)*10, snake_color, w);
 	fruit = new Fruit(fruit_color, w);
+
+	img = loadImage(imgs.jc1);
+	sel = createSelect();
+	sel.option('jc1');
+	sel.option('jc2');
+	sel.option('zach');
+	sel.option('dennis');
+	sel.changed(selectEvent);
 }
 
 function draw() {
 	background("#3A506B");
+	img.resize(width, height);
+	image(img, 0, 0);
+
 	snake.update();
+
+	// check if snake is out of bounds
+	if (snake.snek_arr[0].x < 0 || snake.snek_arr[0].x > width || snake.snek_arr[0].y < 0 || snake.snek_arr[0].y > height) {
+		snake = new Snake(int(random(200,400)/10)*10, int(random(200,400)/10)*10, snake_color, w);
+	}
+
+	// check if the snake and fruit are colliding
+	if ((snake.snek_arr[0].x + w) / 2 == (fruit.x + w) / 2 && (snake.snek_arr[0].y) + w / 2 == (fruit.y) + w / 2) {
+		fruit.spawn();
+		snake.nom();
+		snake.update();
+		console.log(snake);
+	}
+
+
+	// check if snake is colliding with itself
+	var snake_head = snake.snek_arr[0];
+	var hx = (snake_head.x + w) / 2;
+	var hy = (snake_head.y + w) / 2;
+
+	for (var i=0; i<snake.snek_arr.length; i++) {
+		if (i == 0) {
+			continue;
+		}
+		var bx = (snake.snek_arr[i].x + w) / 2;
+		var by = (snake.snek_arr[i].y + w) / 2;
+
+		if (hx == bx && hy == by) {
+			snake = new Snake(int(random(200,400)/10)*10, int(random(200,400)/10)*10, snake_color, w);
+		}
+	}
 
 	if (!fruit.is_alive && snake.dirs != -1) {
 		fruit.spawn();
@@ -32,14 +84,12 @@ function draw() {
 		fruit.show();
 	}
 
-	// check if the snake and fruit are colliding
-	if (snake.snek_arr[0].x     == fruit.x     && snake.snek_arr[0].y     == fruit.y ||
-		snake.snek_arr[0].x + w == fruit.x + w && snake.snek_arr[0].y == fruit.y + w) {
-		fruit.spawn();
-		snake.nom();
-		console.log(snake);
-	}
-
+	// display score
+	textSize(32);
+	fill('red');
+	var a = 5;
+	var b = 4;
+	text('Score: ' + (snake.snek_arr.length - 1), width - 155, 50);
 }
 
 function keyPressed() {
@@ -57,12 +107,18 @@ function keyPressed() {
 	}
 }
 
+function selectEvent() {
+	var value = sel.value();
+	img = loadImage(imgs[value]);
+}
+
 function Snake(xc, yc, color, size) {
 	this.color = color;
 	this.size = size;
 
 	this.snek_arr = [];
 	this.snek_arr.push({x: xc, y: yc});
+	this.snake_head = this.snek_arr[0];
 
 	this.dirs = -1;
 
